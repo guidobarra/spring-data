@@ -25,3 +25,11 @@ spring:
         cache:
           use_query_cache: false
           use_second_level_cache: false
+
+---
+spring:
+  config:
+    activate:
+      on-profile: beta
+  datasource:
+    url: jdbc:mysql://mysql_db:3306/student?useSSL=false&useFractionalSeconds=true

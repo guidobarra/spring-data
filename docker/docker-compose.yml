@@ -1,10 +1,10 @@
 version: "3.6"
 
 services:
-  mysql:
+  mysql_db:
     image: bitnami/mysql:8.0
-    container_name: mysql
-    hostname: mysql
+    container_name: mysql_db
+    hostname: mysql_db
     ports:
       - '3306:3306'
     volumes:
@@ -24,6 +24,22 @@ services:
       options:
         max-size: "10m"
         max-file: "10"
+  java_mysql_app:
+    image: java_mysql_app
+    container_name: java_mysql_app
+    hostname: java_mysql_app
+    build:
+      context: ../
+      dockerfile: ./docker/Dockerfile
+    ports:
+      - "9292:9292"
+    depends_on:
+      - mysql_db
+    #links:
+    #  - mysql:mysql
+    networks:
+      - network_sql
+
 
 networks:
   network_sql:
