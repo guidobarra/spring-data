@@ -4,9 +4,9 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class MySqlApp {
+public class MultiDatabaseApp {
 
     public static void main(String[] args) {
-        SpringApplication.run(MySqlApp.class, args);
+        SpringApplication.run(MultiDatabaseApp.class, args);
     }
 }

@@ -23,3 +23,26 @@ spring:
       use-query-cache: false
       use-second-level-cache: false
       dialect: org.hibernate.dialect.MySQL57Dialect
+  mariadb:
+    datasource:
+      jdbc-url: jdbc:mariadb://localhost:3307/teacher?useSSL=false&useFractionalSeconds=true
+      username: root
+      password: PasswordO1.
+      driver-class-name: org.mariadb.jdbc.Driver
+    hibernate:
+      show-sql: true
+      use-sql-comments: true
+      ddl-auto: none
+      use-query-cache: false
+      use-second-level-cache: false
+      dialect: org.hibernate.dialect.MySQL57Dialect
+
+---
+spring:
+  config:
+    activate:
+      on-profile: beta
+  mysql.datasource:
+    jdbc-url: jdbc:mysql://mysql_db:3306/student?useSSL=false&useFractionalSeconds=true
+  mariadb.datasource:
+    jdbc-url: jdbc:mariadb://maria_db:3307/teacher?useSSL=false&useFractionalSeconds=true

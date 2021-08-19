@@ -1,2 +1,4 @@
 # spring-data
-to use data spring with diferent DataSource
+to use data spring with different DataSource
+
+mariadb
