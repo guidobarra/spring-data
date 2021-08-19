@@ -1,0 +1,35 @@
+server:
+  port: 9292
+  servlet:
+    context-path: '@app.context-path@'
+
+spring:
+  main:
+    banner-mode: 'off'
+  profiles:
+    active: '@activatedProperties@'
+  application:
+    name: '@project.artifactId@'
+  datasource:
+    url: jdbc:mariadb://localhost:3306/teacher?useSSL=false&useFractionalSeconds=true
+    username: root
+    password: PasswordO1.
+    driver-class-name: org.mariadb.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: false
+    database-platform: org.hibernate.dialect.MySQL57Dialect
+    properties:
+      hibernate:
+        cache:
+          use_query_cache: false
+          use_second_level_cache: false
+
+---
+spring:
+  config:
+    activate:
+      on-profile: beta
+  datasource:
+    url: jdbc:mariadb://maria_db:3306/teacher?useSSL=false&useFractionalSeconds=true
