@@ -1,4 +1,4 @@
-package com.guba.springdata.domain;
+package com.guba.springdata.domain.mariadb;
 
 import lombok.Getter;
 import lombok.Setter;

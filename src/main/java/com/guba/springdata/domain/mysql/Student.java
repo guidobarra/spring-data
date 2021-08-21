@@ -1,4 +1,4 @@
-package com.guba.springdata.domain;
+package com.guba.springdata.domain.mysql;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -8,11 +8,11 @@ import javax.persistence.*;
 import java.util.List;
 
 @Entity
-@Table(name = "teacher")
+@Table(name = "student")
 @Setter
 @Getter
 @ToString
-public class Teacher {
+public class Student {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -25,16 +25,16 @@ public class Teacher {
     @Column(name = "last_name")
     private String lastName;
 
-    @Column(name = "title")
-    private String title;
+    @Column(name = "phone")
+    private Integer phone;
 
     @ManyToMany(fetch = FetchType.EAGER,
                 cascade = {CascadeType.DETACH,
                             CascadeType.MERGE,
                             CascadeType.PERSIST,
                             CascadeType.REFRESH})
-    @JoinTable(name = "teacher_subject",
-            joinColumns=@JoinColumn(name="teacher_id"),
-            inverseJoinColumns=@JoinColumn(name="subject_id"))
-    private List<Subject> subjects;
+    @JoinTable(name = "student_domicile",
+            joinColumns=@JoinColumn(name="student_id"),
+            inverseJoinColumns=@JoinColumn(name="domicile_id"))
+    private List<Domicile> domiciles;
 }

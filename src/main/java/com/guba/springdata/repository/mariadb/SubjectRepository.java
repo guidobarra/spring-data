@@ -1,6 +1,6 @@
-package com.guba.springdata.repository;
+package com.guba.springdata.repository.mariadb;
 
-import com.guba.springdata.domain.Subject;
+import com.guba.springdata.domain.mariadb.Subject;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
