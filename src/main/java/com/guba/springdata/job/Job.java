@@ -1,13 +1,13 @@
 package com.guba.springdata.job;
 
-import com.guba.springdata.domain.Domicile;
-import com.guba.springdata.domain.Student;
-import com.guba.springdata.repository.DomicileRepository;
-import com.guba.springdata.repository.StudentRepository;
-import com.guba.springdata.domain.Subject;
-import com.guba.springdata.domain.Teacher;
-import com.guba.springdata.repository.SubjectRepository;
-import com.guba.springdata.repository.TeacherRepository;
+import com.guba.springdata.domain.mysql.Domicile;
+import com.guba.springdata.domain.mysql.Student;
+import com.guba.springdata.repository.mysql.DomicileRepository;
+import com.guba.springdata.repository.mysql.StudentRepository;
+import com.guba.springdata.domain.mariadb.Subject;
+import com.guba.springdata.domain.mariadb.Teacher;
+import com.guba.springdata.repository.mariadb.SubjectRepository;
+import com.guba.springdata.repository.mariadb.TeacherRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -28,6 +28,12 @@ public class Job {
     @Scheduled(fixedDelay = 5000)
     public void getData() {
 
+        printDataMySQL();
+        printDataMariaDB();
+
+    }
+
+    private void printDataMySQL() {
         List<Student> students = studentRepository.findAll();
         List<Domicile> domiciles = domicileRepository.findAll();
         if (students.size() < 2 && domiciles.size() < 2) {
@@ -55,8 +61,10 @@ public class Job {
         log.info("#####################################");
         log.info("all domiciles {}: {}", domiciles.size(), domiciles);
         log.info("all students {}: {}", students.size(), students);
+        log.info("#####################################\n");
+    }
 
-
+    private void printDataMariaDB() {
         List<Teacher> teachers = teacherRepository.findAll();
         List<Subject> subjects = subjectRepository.findAll();
         if (teachers.size() < 2 && subjects.size() < 2) {
