@@ -18,37 +18,37 @@ import java.util.Objects;
 @Configuration
 @EnableTransactionManagement
 @EnableJpaRepositories(
-        entityManagerFactoryRef = "mySQLEntityManagerFactory",
-        transactionManagerRef = "mySQLTransactionManager",
-        basePackages = {"com.guba.springdata.repository.mysql" })
-public class MySQLConfig {
-    
-    @Bean(name = "mySQLDataSource")
-    @ConfigurationProperties(prefix = "spring.mysql.datasource")
-    public DataSource mySQLDataSource() {
+        entityManagerFactoryRef = "mariaDBEntityManagerFactory",
+        transactionManagerRef = "mariaDBTransactionManager",
+        basePackages = {"com.guba.springdata.repository.mariadb" })
+public class MariaDBConfig {
+
+    @Bean(name = "mariaDBDataSource")
+    @ConfigurationProperties(prefix = "spring.mariadb.datasource")
+    public DataSource mariaDBDataSource() {
         return DataSourceBuilder.create().build();
     }
 
-    @Bean(name = "mySQLEntityManagerFactory")
-    public LocalContainerEntityManagerFactoryBean mySQLEntityManagerFactory(
-            @Qualifier("mySQLDataSource") DataSource dataSource,
-            @Qualifier("mysqlHibernateProp") HibernateProp hP) {
+    @Bean(name = "mariaDBEntityManagerFactory")
+    public LocalContainerEntityManagerFactoryBean mariaDBEntityManagerFactory(
+            @Qualifier("mariaDBDataSource") DataSource dataSource,
+            @Qualifier("mariadbHibernateProp") HibernateProp hP) {
         var a = new LocalContainerEntityManagerFactoryBean();
-        a.setDataSource(dataSource);
-        a.setPackagesToScan("com.guba.springdata.domain.mysql");
         a.setJpaVendorAdapter(new HibernateJpaVendorAdapter());
+        a.setDataSource(dataSource);
+        a.setPackagesToScan("com.guba.springdata.domain.mariadb");
         a.setJpaPropertyMap(hP.getPropertiesMap());
         return a;
     }
 
-    @Bean(name = "mySQLTransactionManager")
-    public PlatformTransactionManager mySQLTransactionManager(
-            @Qualifier("mySQLEntityManagerFactory") LocalContainerEntityManagerFactoryBean mySQLEntityManagerFactory) {
-        return new JpaTransactionManager(Objects.requireNonNull(mySQLEntityManagerFactory.getObject()));
+    @Bean(name = "mariaDBTransactionManager")
+    public PlatformTransactionManager mariaDBTransactionManager(
+            @Qualifier("mariaDBEntityManagerFactory") LocalContainerEntityManagerFactoryBean mariaDBEntityManagerFactory) {
+        return new JpaTransactionManager(Objects.requireNonNull(mariaDBEntityManagerFactory.getObject()));
     }
 
-    @Bean("mysqlHibernateProp")
-    @ConfigurationProperties("spring.mysql.hibernate")
+    @Bean("mariadbHibernateProp")
+    @ConfigurationProperties("spring.mariadb.hibernate")
     public HibernateProp hibernateProp() {
         return new HibernateProp();
     }

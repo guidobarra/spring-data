@@ -17,8 +17,8 @@ spring:
       password:
       driver-class-name: com.mysql.cj.jdbc.Driver
     hibernate:
-      show-sql: true
-      use-sql-comments: true
+      show-sql: false
+      use-sql-comments: false
       ddl-auto: none
       use-query-cache: false
       use-second-level-cache: false
@@ -30,12 +30,13 @@ spring:
       password: PasswordO1.
       driver-class-name: org.mariadb.jdbc.Driver
     hibernate:
-      show-sql: true
-      use-sql-comments: true
+      show-sql: false
+      use-sql-comments: false
       ddl-auto: none
       use-query-cache: false
       use-second-level-cache: false
       dialect: org.hibernate.dialect.MySQL57Dialect
+  autoconfigure.exclude: org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
 
 ---
 spring:
@@ -45,4 +46,4 @@ spring:
   mysql.datasource:
     jdbc-url: jdbc:mysql://mysql_db:3306/student?useSSL=false&useFractionalSeconds=true
   mariadb.datasource:
-    jdbc-url: jdbc:mariadb://maria_db:3307/teacher?useSSL=false&useFractionalSeconds=true
+    jdbc-url: jdbc:mariadb://maria_db:3306/teacher?useSSL=false&useFractionalSeconds=true
