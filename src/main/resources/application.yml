@@ -36,6 +36,19 @@ spring:
       use-query-cache: false
       use-second-level-cache: false
       dialect: org.hibernate.dialect.MySQL57Dialect
+  postgres:
+    datasource:
+      jdbc-url: jdbc:postgresql://localhost:5432/department?useSSL=false&useFractionalSeconds=true
+      username: sa
+      password: PasswordO1.
+      driver-class-name: org.postgresql.Driver
+    hibernate:
+      show-sql: false
+      use-sql-comments: false
+      ddl-auto: none
+      use-query-cache: false
+      use-second-level-cache: false
+      dialect: org.hibernate.dialect.PostgreSQL9Dialect
   autoconfigure.exclude: org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
 
 ---
@@ -47,3 +60,5 @@ spring:
     jdbc-url: jdbc:mysql://mysql_db:3306/student?useSSL=false&useFractionalSeconds=true
   mariadb.datasource:
     jdbc-url: jdbc:mariadb://maria_db:3306/teacher?useSSL=false&useFractionalSeconds=true
+  postgres.datasource:
+    jdbc-url: jdbc:postgresql://postgres:5432/department?useSSL=false&useFractionalSeconds=true

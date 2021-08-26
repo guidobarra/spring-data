@@ -19,6 +19,7 @@
         <lombok.version>1.18.20</lombok.version>
         <mysql-connector.version>8.0.24</mysql-connector.version>
         <mariadb-java-client.version>2.5.4</mariadb-java-client.version>
+        <postgresql.version>42.2.2</postgresql.version>
     </properties>
 
     <dependencies>
@@ -52,6 +53,12 @@
             <groupId>org.mariadb.jdbc</groupId>
             <artifactId>mariadb-java-client</artifactId>
             <version>${mariadb-java-client.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>${postgresql.version}</version>
         </dependency>
 
         <!-- LOMBOK -->

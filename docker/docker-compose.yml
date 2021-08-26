@@ -48,6 +48,27 @@ services:
         max-size: "10m"
         max-file: "10"
 
+  postgres:
+    image: postgres:13.4
+    container_name: postgres
+    hostname: postgres
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_PASSWORD: PasswordO1.
+      POSTGRES_USER: sa
+      POSTGRES_DB_CUSTOM: department
+    volumes:
+      - 'multi_database_postgres_data:/var/lib/postgresql/data'
+      - './db.scripts/postgres/:/docker-entrypoint-initdb.d/'
+    networks:
+      - network_multi_database
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "10"
+
   java_multi_database_app:
     image: java_multi_database_app
     container_name: java_multi_database_app
@@ -60,6 +81,7 @@ services:
     depends_on:
       - mysql_db
       - maria_db
+      - postgres
     networks:
       - network_multi_database
 
@@ -71,4 +93,6 @@ volumes:
   multi_database_mariadb_data:
     driver: local
   multi_database_mysql_data:
+    driver: local
+  multi_database_postgres_data:
     driver: local
