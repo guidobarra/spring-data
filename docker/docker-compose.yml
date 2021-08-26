@@ -1,0 +1,46 @@
+version: "3.6"
+
+services:
+  postgres:
+    image: postgres:13.4
+    container_name: postgres
+    hostname: postgres
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_PASSWORD: PasswordO1.
+      POSTGRES_USER: sa
+      POSTGRES_DB_CUSTOM: department
+    volumes:
+      - 'postgres_data:/var/lib/postgresql/data'
+      - './db.scripts/postgres/:/docker-entrypoint-initdb.d/'
+    networks:
+      - network_postgres
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "10"
+
+  java_postgres_app:
+    image: java_postgres_app
+    container_name: java_postgres_app
+    hostname: java_postgres_app
+    build:
+      context: ../
+      dockerfile: ./docker/Dockerfile
+    ports:
+      - "9292:9292"
+    depends_on:
+      - postgres
+    networks:
+      - network_postgres
+
+
+networks:
+  network_postgres:
+    name: network_postgres
+
+volumes:
+  postgres_data:
+    driver: local
