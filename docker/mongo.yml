@@ -1,0 +1,100 @@
+version: '3.8'
+
+services:
+  mongo1:
+    container_name: mongo1
+    hostname: mongo1
+    image: mongo:${VERSION}
+    environment:
+      MONGO_INITDB_DATABASE: ${DATABASE_NAME}
+      MONGO_INITDB_ROOT_USERNAME: ${DATABASE_USER}
+      MONGO_INITDB_ROOT_PASSWORD: ${DATABASE_PASSWORD}
+      MONGO_REPLICA_SET_NAME: ${MONGO_REPLICA_SET_NAME}
+    volumes:
+      - 'data_mongo1:/data/db'
+    networks:
+      - mongo_network
+    ports:
+      - '27017:27017'
+    deploy:
+      restart_policy:
+        condition: on-failure
+        max_attempts: 3
+    entrypoint: [ "/usr/bin/mongod", "--bind_ip_all", "--replSet", "${MONGO_REPLICA_SET_NAME}" ]
+
+  mongo2:
+    container_name: mongo2
+    hostname: mongo2
+    image: mongo:${VERSION}
+    environment:
+      MONGO_INITDB_DATABASE: ${DATABASE_NAME}
+      MONGO_INITDB_ROOT_USERNAME: ${DATABASE_USER}
+      MONGO_INITDB_ROOT_PASSWORD: ${DATABASE_PASSWORD}
+      MONGO_REPLICA_SET_NAME: ${MONGO_REPLICA_SET_NAME}
+    volumes:
+      - 'data_mongo2:/data/db'
+    networks:
+      - mongo_network
+    ports:
+      - '27018:27017'
+    deploy:
+      restart_policy:
+        condition: on-failure
+        max_attempts: 3
+    entrypoint: [ "/usr/bin/mongod", "--bind_ip_all", "--replSet", "${MONGO_REPLICA_SET_NAME}" ]
+
+  mongo3:
+    container_name: mongo3
+    hostname: mongo3
+    image: mongo:${VERSION}
+    environment:
+      MONGO_INITDB_DATABASE: ${DATABASE_NAME}
+      MONGO_INITDB_ROOT_USERNAME: ${DATABASE_USER}
+      MONGO_INITDB_ROOT_PASSWORD: ${DATABASE_PASSWORD}
+      MONGO_REPLICA_SET_NAME: ${MONGO_REPLICA_SET_NAME}
+    volumes:
+      - 'data_mongo3:/data/db'
+      - './init/rs_init.sh:/scripts/rs_init.sh'
+    networks:
+      - mongo_network
+    ports:
+      - '27019:27017'
+    deploy:
+      restart_policy:
+        condition: on-failure
+        max_attempts: 3
+    entrypoint: [ "/usr/bin/mongod", "--bind_ip_all", "--replSet", "${MONGO_REPLICA_SET_NAME}" ]
+
+  mongo-setup:
+    container_name: mongo-setup
+    image: mongo:${VERSION}
+    environment:
+      MONGO_INITDB_DATABASE: ${DATABASE_NAME}
+      MONGO_INITDB_ROOT_USERNAME: ${DATABASE_USER}
+      MONGO_INITDB_ROOT_PASSWORD: ${DATABASE_PASSWORD}
+      MONGO_REPLICA_SET_NAME: ${MONGO_REPLICA_SET_NAME}
+    volumes:
+      - './init/rs_init.sh:/scripts/rs_init.sh'
+    networks:
+      - mongo_network
+    depends_on:
+      - mongo1
+      - mongo2
+      - mongo3
+    entrypoint: [ "bash", "/scripts/rs_init.sh" ]
+    deploy:
+      restart_policy:
+        condition: on-failure
+        max_attempts: 5
+
+networks:
+  mongo_network:
+    driver: bridge
+    
+volumes:
+  data_mongo1:
+    driver: local
+  data_mongo2:
+    driver: local
+  data_mongo3:
+    driver: local
