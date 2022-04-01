@@ -1,0 +1,36 @@
+server:
+  port: 9292
+  servlet:
+    context-path: '@app.context-path@'
+
+spring:
+  main:
+    banner-mode: 'off'
+  profiles:
+    active: '@activatedProperties@'
+  application:
+    name: '@project.artifactId@'
+  datasource:
+    url: jdbc:sqlserver://localhost:1433;databaseName=testdb
+    username: sa
+    password: PasswordO1.
+    driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: false
+    database-platform: org.hibernate.dialect.SQLServerDialect
+    properties:
+      hibernate:
+        cache:
+          use_query_cache: false
+          use_second_level_cache: false
+
+
+---
+spring:
+  config:
+    activate:
+      on-profile: beta
+  datasource:
+    url: jdbc:sqlserver://sql_server:5432/department?useSSL=false&useFractionalSeconds=true

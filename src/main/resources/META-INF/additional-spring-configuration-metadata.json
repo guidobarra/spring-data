@@ -1,0 +1,53 @@
+{
+  "properties": [
+    {
+      "name": "spring.mysql.hibernate.use_query_cache",
+      "type": "java.lang.String",
+      "description": "Description for spring.mysql.hibernate.use_query_cache."
+    },
+    {
+      "name": "spring.mysql.datasource.jdbc-url",
+      "type": "java.lang.String",
+      "description": "Description for spring.mysql.datasource.jdbc-url."
+    },
+    {
+      "name": "spring.mysql.datasource.username",
+      "type": "java.lang.String",
+      "description": "Description for spring.mysql.datasource.username."
+    },
+    {
+      "name": "spring.mysql.datasource.password",
+      "type": "java.lang.String",
+      "description": "Description for spring.mysql.datasource.password."
+    },
+    {
+      "name": "spring.mysql.datasource.driver-class-name",
+      "type": "java.lang.String",
+      "description": "Description for spring.mysql.datasource.driver-class-name."
+    },
+    {
+      "name": "spring.mysql.hibernate.use-sql-comments",
+      "type": "java.lang.String",
+      "description": "Description for spring.mysql.hibernate.use-sql-comments."
+    },
+    {
+      "name": "spring.mysql.hibernate.show-sql",
+      "type": "java.lang.String",
+      "description": "Description for spring.mysql.hibernate.show-sql."
+    },
+    {
+      "name": "spring.mysql.hibernate.ddl-auto",
+      "type": "java.lang.String",
+      "description": "Description for spring.mysql.hibernate.ddl-auto."
+    },
+    {
+      "name": "spring.mysql.hibernate.use_second_level_cache",
+      "type": "java.lang.String",
+      "description": "Description for spring.mysql.hibernate.use_second_level_cache."
+    },
+    {
+      "name": "spring.mysql.hibernate.dialect",
+      "type": "java.lang.String",
+      "description": "Description for spring.mysql.hibernate.dialect."
+    }
+  ] }

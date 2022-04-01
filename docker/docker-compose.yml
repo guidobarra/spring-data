@@ -1,0 +1,29 @@
+version: "3.6"
+
+services:
+
+  sql_server:
+    image: mcr.microsoft.com/azure-sql-edge:latest #:1.0.5 #mcr.microsoft.com/mssql/server:2019-latest
+    container_name: sql_server
+    hostname: sql_server
+    ports:
+      - "1433:1433"
+    environment:
+      # ACCEPT_EULA: Y
+      # SA_PASSWORD: PasswordO1.
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=PasswordO1.
+      - MSSQL_PID=Developer
+    volumes:
+      - 'sql_server_data:/var/opt/mssql'
+      - './db.scripts/mssql/setup.sql:/usr/config/setup.sql'
+    networks:
+      - network_sql_server
+
+networks:
+  network_sql_server:
+    name: network_sql_server
+
+volumes:
+  sql_server_data:
+    driver: local
