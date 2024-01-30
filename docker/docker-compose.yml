@@ -1,0 +1,103 @@
+version: "3.3"
+
+services:
+
+  java_spring_app:
+    image: java_spring_app
+    container_name: java_spring_app
+    hostname: java_spring_app
+    build:
+      context: ../
+      dockerfile: ./docker/Dockerfile
+    ports:
+      - "9292:9292"
+    networks:
+      - redis-net
+    depends_on:
+      - redis_1
+      - redis_6
+
+  redis_1:
+    hostname: redis_1
+    container_name: redis_1
+    image: 'redis:latest'
+    command: 'redis-server /usr/local/etc/redis/redis.conf'
+    ports:
+      - "26379:6379"
+    volumes:
+      - ./redis.conf:/usr/local/etc/redis/redis.conf
+    networks:
+      - redis-net
+
+  redis_2:
+    hostname: redis_2
+    container_name: redis_2
+    image: 'redis:latest'
+    command: 'redis-server /usr/local/etc/redis/redis.conf'
+    ports:
+      - "26380:6379"
+    volumes:
+      - ./redis.conf:/usr/local/etc/redis/redis.conf
+    networks:
+      - redis-net
+
+  redis_3:
+    hostname: redis_3
+    container_name: redis_3
+    image: 'redis:latest'
+    command: 'redis-server /usr/local/etc/redis/redis.conf'
+    ports:
+      - "26381:6379"
+    volumes:
+      - ./redis.conf:/usr/local/etc/redis/redis.conf
+    networks:
+      - redis-net
+
+  redis_4:
+    hostname: redis_4
+    container_name: redis_4
+    image: 'redis:latest'
+    command: 'redis-server /usr/local/etc/redis/redis.conf'
+    ports:
+      - "26382:6379"
+    volumes:
+      - ./redis.conf:/usr/local/etc/redis/redis.conf
+    networks:
+      - redis-net
+
+  redis_5:
+    hostname: redis_5
+    container_name: redis_5
+    image: 'redis:latest'
+    command: 'redis-server /usr/local/etc/redis/redis.conf'
+    ports:
+      - "26383:6379"
+    volumes:
+      - ./redis.conf:/usr/local/etc/redis/redis.conf
+    networks:
+      - redis-net
+
+  redis_6:
+    hostname: redis_6
+    container_name: redis_6
+    image: 'redis:latest'
+    command: 'redis-server /usr/local/etc/redis/redis.conf'
+    ports:
+      - "26384:6379"
+    volumes:
+      - ./redis.conf:/usr/local/etc/redis/redis.conf
+    networks:
+      - redis-net
+
+  redisinsight:
+    image: 'redislabs/redisinsight:latest'
+    container_name: redisinsight
+    ports:
+      - "8001:8001"
+    networks:
+      - redis-net
+
+networks:
+  redis-net:
+    name: redis-net
+    driver: bridge

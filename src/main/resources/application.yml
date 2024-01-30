@@ -1,0 +1,46 @@
+server:
+  port: 9292
+  servlet:
+    context-path: '@app.context-path@'
+
+spring:
+  main:
+    banner-mode: 'off'
+  application:
+    name: '@project.artifactId@'
+  profiles:
+    active: '@activatedProperties@'
+  data:
+    redis:
+      repositories:
+        enabled: true
+      cluster:
+        nodes: localhost:26379
+        max-redirects: 3
+      client-type: lettuce
+      connect-timeout: 600ms
+      timeout: 600ms
+
+---
+spring:
+  config:
+    activate:
+      on-profile: dev
+
+---
+spring:
+  config:
+    activate:
+      on-profile: beta
+  data:
+    redis:
+      repositories:
+        enabled: true
+      cluster:
+        nodes: redis_1:6379,redis_2:6379,redis_3:6379,redis_4:6379,redis_5:6379,redis_6:6379
+        max-redirects: 3
+
+server:
+  port: 9292
+  servlet:
+    context-path: '/redis'
