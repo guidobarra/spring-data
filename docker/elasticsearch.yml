@@ -1,0 +1,367 @@
+#version: "2.2"
+
+services:
+  setup:
+    image: docker.elastic.co/elasticsearch/elasticsearch:${STACK_VERSION}
+    volumes:
+      - certs:/usr/share/elasticsearch/config/certs
+    user: "0"
+    command: >
+      bash -c '
+        if [ x${ELASTIC_PASSWORD} == x ]; then
+          echo "Set the ELASTIC_PASSWORD environment variable in the .env file";
+          exit 1;
+        elif [ x${KIBANA_PASSWORD} == x ]; then
+          echo "Set the KIBANA_PASSWORD environment variable in the .env file";
+          exit 1;
+        fi;
+        if [ ! -f config/certs/ca.zip ]; then
+          echo "Creating CA";
+          bin/elasticsearch-certutil ca --silent --pem -out config/certs/ca.zip;
+          unzip config/certs/ca.zip -d config/certs;
+        fi;
+        if [ ! -f config/certs/certs.zip ]; then
+          echo "Creating certs";
+          echo -ne \
+          "instances:\n"\
+          "  - name: es-coordinator-01\n"\
+          "    dns:\n"\
+          "      - es-coordinator-01\n"\
+          "      - localhost\n"\
+          "    ip:\n"\
+          "      - 127.0.0.1\n"\
+          "  - name: es-master-01\n"\
+          "    dns:\n"\
+          "      - es-master-01\n"\
+          "      - localhost\n"\
+          "    ip:\n"\
+          "      - 127.0.0.1\n"\
+          "  - name: es-master-02\n"\
+          "    dns:\n"\
+          "      - es-master-02\n"\
+          "      - localhost\n"\
+          "    ip:\n"\
+          "      - 127.0.0.1\n"\
+          "  - name: es-data-01\n"\
+          "    dns:\n"\
+          "      - es-data-01\n"\
+          "      - localhost\n"\
+          "    ip:\n"\
+          "      - 127.0.0.1\n"\
+          "  - name: es-data-02\n"\
+          "    dns:\n"\
+          "      - es-data-02\n"\
+          "      - localhost\n"\
+          "    ip:\n"\
+          "      - 127.0.0.1\n"\
+          > config/certs/instances.yml;
+          bin/elasticsearch-certutil cert --silent --pem -out config/certs/certs.zip --in config/certs/instances.yml --ca-cert config/certs/ca/ca.crt --ca-key config/certs/ca/ca.key;
+          unzip config/certs/certs.zip -d config/certs;
+        fi;
+        echo "Setting file permissions"
+        chown -R root:root config/certs;
+        find . -type d -exec chmod 750 \{\} \;;
+        find . -type f -exec chmod 640 \{\} \;;
+        echo "Waiting for Elasticsearch availability";
+        until curl -s --cacert config/certs/ca/ca.crt https://es-coordinator-01:9200/_cluster/health | grep "is unauthorized for user \[anonymous_user\]"; do sleep 30; done;
+        echo "Setting kibana_system password";
+        until curl -s -X POST --cacert config/certs/ca/ca.crt -u "elastic:${ELASTIC_PASSWORD}" -H "Content-Type: application/json" https://es-coordinator-01:9200/_security/user/kibana_system/_password -d "{\"password\":\"${KIBANA_PASSWORD}\"}" | grep -q "^{}"; do sleep 10; done;
+        echo "All done!";
+      '
+    healthcheck:
+      test: ["CMD-SHELL", "[ -f config/certs/es-coordinator-01/es-coordinator-01.crt ]"]
+      interval: 1s
+      timeout: 5s
+      retries: 120
+
+  es-coordinator-01:
+    depends_on:
+      setup:
+        condition: service_healthy
+    image: docker.elastic.co/elasticsearch/elasticsearch:${STACK_VERSION}
+    volumes:
+      - certs:/usr/share/elasticsearch/config/certs
+      - v-coordinator-01:/usr/share/elasticsearch/data
+    ports:
+      - ${ES_PORT}:9200
+    environment:
+      - node.ingest=true
+      - node.master=false
+      - node.data=false
+      #- node.roles=ml,remote_cluster_client
+      - node.name=es-coordinator-01
+      - cluster.name=${CLUSTER_NAME}
+      - cluster.initial_master_nodes=es-master-01,es-master-02
+      - discovery.seed_hosts=es-master-01,es-master-02,es-data-01,es-data-02
+      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
+      - bootstrap.memory_lock=true
+      - xpack.security.enabled=${XPACK_SECURITY_ENABLED}
+      - xpack.security.http.ssl.enabled=true
+      - xpack.security.http.ssl.key=certs/es-coordinator-01/es-coordinator-01.key
+      - xpack.security.http.ssl.certificate=certs/es-coordinator-01/es-coordinator-01.crt
+      - xpack.security.http.ssl.certificate_authorities=certs/ca/ca.crt
+      - xpack.security.http.ssl.verification_mode=certificate
+      - xpack.security.transport.ssl.enabled=true
+      - xpack.security.transport.ssl.key=certs/es-coordinator-01/es-coordinator-01.key
+      - xpack.security.transport.ssl.certificate=certs/es-coordinator-01/es-coordinator-01.crt
+      - xpack.security.transport.ssl.certificate_authorities=certs/ca/ca.crt
+      - xpack.security.transport.ssl.verification_mode=certificate
+      - xpack.license.self_generated.type=${LICENSE}
+      - xpack.monitoring.collection.enabled=true
+      - xpack.security.authc.anonymous.username=anonymous_user
+      - xpack.security.authc.anonymous.roles=${ROLE_USER}
+      - xpack.security.authc.anonymous.authz_exception=true
+    mem_limit: ${MEM_LIMIT}
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          'curl -s --cacert config/certs/ca/ca.crt https://localhost:9200 | grep -P ".*"name".*:.*"es-coordinator-01""',
+        ]
+      interval: 10s
+      timeout: 10s
+      retries: 120
+
+  es-master-01:
+    depends_on:
+      - es-coordinator-01
+    image: docker.elastic.co/elasticsearch/elasticsearch:${STACK_VERSION}
+    volumes:
+      - certs:/usr/share/elasticsearch/config/certs
+      - v-master-01:/usr/share/elasticsearch/data
+    environment:
+      - node.ingest=false
+      - node.master=true
+      - node.data=false
+      #- node.roles=master,ml,remote_cluster_client
+      - node.name=es-master-01
+      - cluster.name=${CLUSTER_NAME}
+      - cluster.initial_master_nodes=es-master-01,es-master-02
+      - discovery.seed_hosts=es-coordinator-01,es-master-02,es-data-01,es-data-02
+      - bootstrap.memory_lock=true
+      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
+      - xpack.security.enabled=${XPACK_SECURITY_ENABLED}
+      - xpack.security.http.ssl.enabled=true
+      - xpack.security.http.ssl.key=certs/es-master-01/es-master-01.key
+      - xpack.security.http.ssl.certificate=certs/es-master-01/es-master-01.crt
+      - xpack.security.http.ssl.certificate_authorities=certs/ca/ca.crt
+      - xpack.security.http.ssl.verification_mode=certificate
+      - xpack.security.transport.ssl.enabled=true
+      - xpack.security.transport.ssl.key=certs/es-master-01/es-master-01.key
+      - xpack.security.transport.ssl.certificate=certs/es-master-01/es-master-01.crt
+      - xpack.security.transport.ssl.certificate_authorities=certs/ca/ca.crt
+      - xpack.security.transport.ssl.verification_mode=certificate
+      - xpack.license.self_generated.type=${LICENSE}
+      - xpack.monitoring.collection.enabled=true
+      - xpack.security.authc.anonymous.username=anonymous_user
+      - xpack.security.authc.anonymous.roles=${ROLE_USER}
+      - xpack.security.authc.anonymous.authz_exception=true
+    mem_limit: ${MEM_LIMIT}
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          'curl -s --cacert config/certs/ca/ca.crt https://localhost:9200 | grep -P ".*"name".*:.*"es-master-01""',
+        ]
+      interval: 10s
+      timeout: 10s
+      retries: 120
+
+  es-master-02:
+    depends_on:
+      - es-master-01
+    image: docker.elastic.co/elasticsearch/elasticsearch:${STACK_VERSION}
+    volumes:
+      - certs:/usr/share/elasticsearch/config/certs
+      - v-master-02:/usr/share/elasticsearch/data
+    environment:
+      - node.ingest=false
+      - node.master=true
+      - node.data=false
+      - node.name=es-master-02
+      #- node.roles=data,data_cold,data_content,data_frozen,data_hot,data_warm,ingest,ml,remote_cluster_client,transform
+      - cluster.name=${CLUSTER_NAME}
+      - cluster.initial_master_nodes=es-master-01,es-data-01
+      - discovery.seed_hosts=es-coordinator-01,es-master-01,es-data-01,es-data-02
+      - bootstrap.memory_lock=true
+      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
+      - xpack.security.enabled=${XPACK_SECURITY_ENABLED}
+      - xpack.security.http.ssl.enabled=true
+      - xpack.security.http.ssl.key=certs/es-master-02/es-master-02.key
+      - xpack.security.http.ssl.certificate=certs/es-master-02/es-master-02.crt
+      - xpack.security.http.ssl.certificate_authorities=certs/ca/ca.crt
+      - xpack.security.http.ssl.verification_mode=certificate
+      - xpack.security.transport.ssl.enabled=true
+      - xpack.security.transport.ssl.key=certs/es-master-02/es-master-02.key
+      - xpack.security.transport.ssl.certificate=certs/es-master-02/es-master-02.crt
+      - xpack.security.transport.ssl.certificate_authorities=certs/ca/ca.crt
+      - xpack.security.transport.ssl.verification_mode=certificate
+      - xpack.license.self_generated.type=${LICENSE}
+      - xpack.monitoring.collection.enabled=true
+      - xpack.security.authc.anonymous.username=anonymous_user
+      - xpack.security.authc.anonymous.roles=${ROLE_USER}
+      - xpack.security.authc.anonymous.authz_exception=true
+    mem_limit: ${MEM_LIMIT}
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "curl -s --cacert config/certs/ca/ca.crt https://localhost:9200 | grep -P '.*\"name\".*:.*\"es-master-02\"'",
+        ]
+      interval: 10s
+      timeout: 10s
+      retries: 120
+
+  es-data-01:
+    depends_on:
+      - es-coordinator-01
+    image: docker.elastic.co/elasticsearch/elasticsearch:${STACK_VERSION}
+    volumes:
+      - certs:/usr/share/elasticsearch/config/certs
+      - v-data-01:/usr/share/elasticsearch/data
+    environment:
+      - node.ingest=false
+      - node.master=false
+      - node.data=true
+      #- node.roles=master,ml,remote_cluster_client
+      - node.name=es-data-01
+      - cluster.name=${CLUSTER_NAME}
+      - cluster.initial_master_nodes=es-master-01,es-data-01
+      - discovery.seed_hosts=es-coordinator-01,es-master-02,es-master-01,es-data-02
+      - bootstrap.memory_lock=true
+      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
+      - xpack.security.enabled=${XPACK_SECURITY_ENABLED}
+      - xpack.security.http.ssl.enabled=true
+      - xpack.security.http.ssl.key=certs/es-data-01/es-data-01.key
+      - xpack.security.http.ssl.certificate=certs/es-data-01/es-data-01.crt
+      - xpack.security.http.ssl.certificate_authorities=certs/ca/ca.crt
+      - xpack.security.http.ssl.verification_mode=certificate
+      - xpack.security.transport.ssl.enabled=true
+      - xpack.security.transport.ssl.key=certs/es-data-01/es-data-01.key
+      - xpack.security.transport.ssl.certificate=certs/es-data-01/es-data-01.crt
+      - xpack.security.transport.ssl.certificate_authorities=certs/ca/ca.crt
+      - xpack.security.transport.ssl.verification_mode=certificate
+      - xpack.license.self_generated.type=${LICENSE}
+      - xpack.monitoring.collection.enabled=true
+      - xpack.security.authc.anonymous.username=anonymous_user
+      - xpack.security.authc.anonymous.roles=${ROLE_USER}
+      - xpack.security.authc.anonymous.authz_exception=true
+    mem_limit: ${MEM_LIMIT}
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          'curl -s --cacert config/certs/ca/ca.crt https://localhost:9200 | grep -P ".*"name".*:.*"es-data-01""',
+        ]
+      interval: 10s
+      timeout: 10s
+      retries: 120
+
+  es-data-02:
+    depends_on:
+      - es-master-01
+    image: docker.elastic.co/elasticsearch/elasticsearch:${STACK_VERSION}
+    volumes:
+      - certs:/usr/share/elasticsearch/config/certs
+      - v-data-02:/usr/share/elasticsearch/data
+    environment:
+      - node.ingest=false
+      - node.master=false
+      - node.data=true
+      - node.name=es-data-02
+      #- node.roles=data,data_cold,data_content,data_frozen,data_hot,data_warm,ingest,ml,remote_cluster_client,transform
+      - cluster.name=${CLUSTER_NAME}
+      - cluster.initial_master_nodes=es-master-01,es-data-01
+      - discovery.seed_hosts=es-coordinator-01,es-master-01,es-master-02,es-data-01
+      - bootstrap.memory_lock=true
+      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
+      - xpack.security.enabled=${XPACK_SECURITY_ENABLED}
+      - xpack.security.http.ssl.enabled=true
+      - xpack.security.http.ssl.key=certs/es-data-02/es-data-02.key
+      - xpack.security.http.ssl.certificate=certs/es-data-02/es-data-02.crt
+      - xpack.security.http.ssl.certificate_authorities=certs/ca/ca.crt
+      - xpack.security.http.ssl.verification_mode=certificate
+      - xpack.security.transport.ssl.enabled=true
+      - xpack.security.transport.ssl.key=certs/es-data-02/es-data-02.key
+      - xpack.security.transport.ssl.certificate=certs/es-data-02/es-data-02.crt
+      - xpack.security.transport.ssl.certificate_authorities=certs/ca/ca.crt
+      - xpack.security.transport.ssl.verification_mode=certificate
+      - xpack.license.self_generated.type=${LICENSE}
+      - xpack.monitoring.collection.enabled=true
+      - xpack.security.authc.anonymous.username=anonymous_user
+      - xpack.security.authc.anonymous.roles=${ROLE_USER}
+      - xpack.security.authc.anonymous.authz_exception=true
+    mem_limit: ${MEM_LIMIT}
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "curl -s --cacert config/certs/ca/ca.crt https://localhost:9200 | grep -P '.*\"name\".*:.*\"es-data-02\"'",
+        ]
+      interval: 10s
+      timeout: 10s
+      retries: 120
+  
+  kibana:
+    depends_on:
+      es-coordinator-01:
+        condition: service_healthy
+      es-master-01:
+        condition: service_healthy
+      es-master-02:
+        condition: service_healthy
+    image: docker.elastic.co/kibana/kibana:${STACK_VERSION}
+    env_file: ./kibana/config_kibana.env
+    volumes:
+      - certs:/usr/share/kibana/config/certs
+      - v-kibana-01:/usr/share/kibana/data
+      - ./kibana/kibana.yml:/usr/share/kibana/config/kibana.yml
+    ports:
+      - ${KIBANA_PORT}:5601
+    environment:
+      - ELASTICSEARCH_SSL_CERTIFICATEAUTHORITIES=config/certs/ca/ca.crt
+      #- SERVERNAME=kibana
+      - ELASTIC_HOST_KIBANA=https://es-coordinator-01:9200
+      #- ELASTICSEARCH_USERNAME=kibana_system
+      #- ELASTICSEARCH_PASSWORD=${KIBANA_PASSWORD}
+    mem_limit: ${MEM_LIMIT}
+
+volumes:
+  certs:
+    driver: local
+  v-coordinator-01:
+    driver: local
+  v-master-01:
+    driver: local
+  v-master-02:
+    driver: local
+  v-data-01:
+    driver: local
+  v-data-02:
+    driver: local
+  v-kibana-01:
+    driver: local
+  v-logstash-01:
+    driver: local
+
+#echo "hola" | nc localhost 8514 

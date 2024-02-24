@@ -1,0 +1,200 @@
+#version: "2.2"
+
+services:
+
+  es-coordinator-01:
+    image: docker.elastic.co/elasticsearch/elasticsearch:${STACK_VERSION}
+    volumes:
+      - v-coordinator-01:/usr/share/elasticsearch/data
+    ports:
+      - ${ES_PORT}:9200
+    environment:
+      - node.ingest=true
+      - node.master=false
+      - node.data=false
+      #- node.roles=ml,remote_cluster_client
+      - node.name=es-coordinator-01
+      - cluster.name=${CLUSTER_NAME}
+      - cluster.initial_master_nodes=es-master-01,es-master-02
+      - discovery.seed_hosts=es-master-01,es-master-02,es-master-02,es-data-02
+      - bootstrap.memory_lock=true
+      - xpack.monitoring.collection.enabled=true
+    mem_limit: ${MEM_LIMIT}
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          'curl http://localhost:9200 | grep -P ".*"name".*:.*"es-coordinator-01""',
+        ]
+      interval: 10s
+      timeout: 10s
+      retries: 120
+
+  es-master-01:
+    depends_on:
+      - es-coordinator-01
+    image: docker.elastic.co/elasticsearch/elasticsearch:${STACK_VERSION}
+    volumes:
+      - v-master-01:/usr/share/elasticsearch/data
+    environment:
+      - node.ingest=false
+      - node.master=true
+      - node.data=false
+      #- node.roles=master,ml,remote_cluster_client
+      - node.name=es-master-01
+      - cluster.name=${CLUSTER_NAME}
+      - cluster.initial_master_nodes=es-master-01,es-master-02
+      - discovery.seed_hosts=es-coordinator-01,es-master-02,es-master-02,es-data-02
+      - bootstrap.memory_lock=true
+      - xpack.license.self_generated.type=${LICENSE}
+      - xpack.monitoring.collection.enabled=true
+    mem_limit: ${MEM_LIMIT}
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          'curl http://localhost:9200 | grep -P ".*"name".*:.*"es-master-01""',
+        ]
+      interval: 10s
+      timeout: 10s
+      retries: 120
+
+  es-master-02:
+    depends_on:
+      - es-coordinator-01
+    image: docker.elastic.co/elasticsearch/elasticsearch:${STACK_VERSION}
+    volumes:
+      - v-master-02:/usr/share/elasticsearch/data
+    environment:
+      - node.ingest=false
+      - node.master=true
+      - node.data=false
+      #- node.roles=master,ml,remote_cluster_client
+      - node.name=es-master-02
+      - cluster.name=${CLUSTER_NAME}
+      - cluster.initial_master_nodes=es-master-01,es-master-02
+      - discovery.seed_hosts=es-coordinator-01,es-master-01,es-data-01,es-data-02
+      - bootstrap.memory_lock=true
+      - xpack.license.self_generated.type=${LICENSE}
+      - xpack.monitoring.collection.enabled=true
+    mem_limit: ${MEM_LIMIT}
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          'curl http://localhost:9200 | grep -P ".*"name".*:.*"es-master-02""',
+        ]
+      interval: 10s
+      timeout: 10s
+      retries: 120
+  
+  es-data-01:
+    depends_on:
+      - es-master-01
+    image: docker.elastic.co/elasticsearch/elasticsearch:${STACK_VERSION}
+    volumes:
+      - v-data-01:/usr/share/elasticsearch/data
+    environment:
+      - node.ingest=false
+      - node.master=false
+      - node.data=true
+      - node.name=es-data-01
+      #- node.roles=data,data_cold,data_content,data_frozen,data_hot,data_warm,ingest,ml,remote_cluster_client,transform
+      - cluster.name=${CLUSTER_NAME}
+      - cluster.initial_master_nodes=es-master-01,es-master-02
+      - discovery.seed_hosts=es-coordinator-01,es-master-01,es-master-02,es-data-02
+      - bootstrap.memory_lock=true
+      - xpack.license.self_generated.type=${LICENSE}
+      - xpack.monitoring.collection.enabled=true
+    mem_limit: ${MEM_LIMIT}
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "curl http://localhost:9200 | grep -P '.*\"name\".*:.*\"es-data-01\"'",
+        ]
+      interval: 10s
+      timeout: 10s
+      retries: 120
+
+  es-data-02:
+    depends_on:
+      - es-master-02
+    image: docker.elastic.co/elasticsearch/elasticsearch:${STACK_VERSION}
+    volumes:
+      - v-data-02:/usr/share/elasticsearch/data
+    environment:
+      - node.ingest=false
+      - node.master=false
+      - node.data=true
+      - node.name=es-data-02
+      #- node.roles=data,data_cold,data_content,data_frozen,data_hot,data_warm,ingest,ml,remote_cluster_client,transform
+      - cluster.name=${CLUSTER_NAME}
+      - cluster.initial_master_nodes=es-master-01,es-master-02
+      - discovery.seed_hosts=es-coordinator-01,es-master-01,es-master-02,es-master-02
+      - bootstrap.memory_lock=true
+      - xpack.license.self_generated.type=${LICENSE}
+      - xpack.monitoring.collection.enabled=true
+    mem_limit: ${MEM_LIMIT}
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "curl http://localhost:9200 | grep -P '.*\"name\".*:.*\"es-data-02\"'",
+        ]
+      interval: 10s
+      timeout: 10s
+      retries: 120
+  
+  kibana:
+    depends_on:
+      es-coordinator-01:
+        condition: service_healthy
+      es-master-01:
+        condition: service_healthy
+      es-master-02:
+        condition: service_healthy
+    image: docker.elastic.co/kibana/kibana:${STACK_VERSION}
+    env_file: ./kibana/config_kibana.env
+    volumes:
+      - v-kibana-01:/usr/share/kibana/data
+      - ./kibana/kibana.yml:/usr/share/kibana/config/kibana.yml
+    ports:
+      - ${KIBANA_PORT}:5601
+    environment:
+      - ELASTIC_HOST_KIBANA=http://es-coordinator-01:9200
+    mem_limit: ${MEM_LIMIT}
+
+volumes:
+  v-coordinator-01:
+    driver: local
+  v-master-01:
+    driver: local
+  v-master-02:
+    driver: local
+  v-data-01:
+    driver: local
+  v-data-02:
+    driver: local
+  v-kibana-01:
+    driver: local

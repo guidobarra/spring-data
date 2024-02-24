@@ -1,0 +1,50 @@
+server:
+  port: 9292
+  servlet:
+    context-path: '@app.context-path@'
+
+spring:
+  main:
+    banner-mode: 'off'
+  application:
+    name: '@project.artifactId@'
+  profiles:
+    active: '@activatedProperties@'
+  elasticsearch:
+    uris: http://localhost:9200
+    #path-prefix:
+    socket-timeout: 500ms
+    connection-timeout: 500ms
+
+elasticsearch:
+  host-and-port: localhost:9200
+  username: elastic
+  password: elastic_GUBA
+  socket-timeout: 500ms
+  connection-timeout: 500ms
+  headers:
+    X-client: elastic-guba
+
+
+---
+spring:
+  config:
+    activate:
+      on-profile: dev
+
+---
+spring:
+  config:
+    activate:
+      on-profile: beta
+  elasticsearch:
+    uris: https://es-coordinator-01:9200
+    username: elastic
+    password: elastic_GUBA
+
+elasticsearch:
+  host-and-port: es-coordinator-01:9200
+
+server:
+  servlet:
+    context-path: '/elasticsearch'

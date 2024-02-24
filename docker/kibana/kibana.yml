@@ -1,0 +1,27 @@
+#
+# ** THIS IS AN AUTO-GENERATED FILE **
+#
+
+# Default Kibana configuration for docker target
+server.host: "0.0.0.0"
+server.shutdownTimeout: "5s"
+elasticsearch.hosts: [ "${ELASTIC_HOST_KIBANA}" ]
+monitoring.ui.container.elasticsearch.enabled: true
+elasticsearch.username: "${ELASTIC_USER}"
+elasticsearch.password: "${ELASTIC_PASS}"
+#no se porque no toma esta property
+#elasticsearch.ssl.certificate: "config/certs/ca/ca.crt"
+
+# Kibana is served by a back end server. This setting specifies the port to use.
+server.port: 5601
+#server.ssl.redirectHttpFromPort: 9092
+#server.host: "testguba"
+#server.basePath: "/guba-kibana"
+#server.rewriteBasePath: true
+server.name: "kibana-docker"
+xpack.security.authc.providers:
+  basic.basic1.order: 0
+  anonymous.anonymous1:
+    order: 1
+    credentials.username: "anonymous_user2"
+    credentials.password: "anonymous_user2"
