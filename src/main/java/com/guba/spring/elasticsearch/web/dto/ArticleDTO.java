@@ -15,29 +15,39 @@ public record ArticleDTO(
         String title,
         @NotNull(message = "authors is mandatory")
         Set<String> author,
-        String[] tags
+        String[] tags,
+        @NotEmpty(message = "type is mandatory")
+        String type,
+        @NotEmpty(message = "category is mandatory")
+        String category,
+        @NotNull(message = "price is mandatory")
+        Double price
 ) {
-        @Override
-        public String toString() {
-                return "ArticleDTO{" +
-                        "title='" + title + '\'' +
-                        ", author=" + author +
-                        ", tags=" + Arrays.toString(tags) +
-                        '}';
-        }
-
         @Override
         public boolean equals(Object o) {
                 if (this == o) return true;
                 if (o == null || getClass() != o.getClass()) return false;
                 ArticleDTO that = (ArticleDTO) o;
-                return Objects.equals(title, that.title) && Objects.equals(author, that.author) && Arrays.equals(tags, that.tags);
+                return Objects.equals(id, that.id) && Objects.equals(title, that.title) && Objects.equals(author, that.author) && Arrays.equals(tags, that.tags) && Objects.equals(type, that.type) && Objects.equals(category, that.category) && Objects.equals(price, that.price);
         }
 
         @Override
         public int hashCode() {
-                int result = Objects.hash(title, author);
+                int result = Objects.hash(id, title, author, type, category, price);
                 result = 31 * result + Arrays.hashCode(tags);
                 return result;
+        }
+
+        @Override
+        public String toString() {
+                return "ArticleDTO{" +
+                        "id='" + id + '\'' +
+                        ", title='" + title + '\'' +
+                        ", author=" + author +
+                        ", tags=" + Arrays.toString(tags) +
+                        ", type='" + type + '\'' +
+                        ", category='" + category + '\'' +
+                        ", price=" + price +
+                        '}';
         }
 }

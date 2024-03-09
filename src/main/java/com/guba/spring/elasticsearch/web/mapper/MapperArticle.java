@@ -10,13 +10,17 @@ import java.util.stream.Collectors;
 
 public class MapperArticle {
 
+    private MapperArticle() {
+        throw new IllegalStateException("Utility class MapperArticle");
+    }
+
     public static ArticleDTO toArticleDTO(Article a) {
         Set<String> authorsName = a
                 .getAuthors()
                 .stream()
                 .map(Author::getName)
                 .collect(Collectors.toSet());
-        return new ArticleDTO(a.getId(), a.getTitle(), authorsName, a.getTags());
+        return new ArticleDTO(a.getId(), a.getTitle(), authorsName, a.getTags(), a.getType(), a.getCategory(), a.getPrice());
     }
 
     public static Article toArticle(ArticleDTO a) {
@@ -25,6 +29,6 @@ public class MapperArticle {
                 .stream()
                 .map(Author::new)
                 .toList();
-        return new Article(a.id(), a.title(), authors, a.tags());
+        return new Article(a.id(), a.title(), authors, a.tags(), a.type(), a.category(), a.price());
     }
 }

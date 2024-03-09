@@ -4,18 +4,26 @@
 
 * create image docker, only app java
 
-``
-docker compose --env-file ./docker/elasticsearch.env -f docker/docker-compose.yml --project-directory ./docker build --no-cache
-``
+    ```
+    make docker_build
+    ```
 
 ## run app
 
 * run stack elastic without credentials for run local
-```
-docker compose --env-file ./docker/elasticsearch.env  -f docker/elasticsearch.yml --project-directory ./docker up -d
-```
+    ```
+    make docker_deploy_elastic
+    ```
 
 * run stack elastic with credentials and app java 
-```
-docker compose --env-file ./docker/elasticsearch.env  -f docker/docker-compose.yml --project-directory ./docker up -d
-```
+    ```
+    make docker_deploy
+    ```
+
+## swagger
+
+[link](http://localhost:9292/elasticsearch/swagger-ui/index.html)
+
+## kibana
+
+[link](http://localhost:5601/login?next=%2F)

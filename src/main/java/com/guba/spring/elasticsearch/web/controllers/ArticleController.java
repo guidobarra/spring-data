@@ -1,5 +1,7 @@
 package com.guba.spring.elasticsearch.web.controllers;
 
+import com.guba.spring.elasticsearch.criterial.models.CriteriaDTO;
+import com.guba.spring.elasticsearch.criterial.services.CriteriaService;
 import com.guba.spring.elasticsearch.databases.elasticsearch.domains.Article;
 import com.guba.spring.elasticsearch.databases.elasticsearch.repositories.ArticleRepository;
 import com.guba.spring.elasticsearch.web.dto.ArticleDTO;
@@ -30,6 +32,7 @@ public class ArticleController {
 
     private final ElasticsearchOperations elasticsearchOperations;
     private final ArticleRepository articleRepository;
+    private final CriteriaService criteriaService;
 
     @PostConstruct()
     void getClusterHealth() {
@@ -57,7 +60,6 @@ public class ArticleController {
         query.addSort(article);
         query.setTimeout(Duration.of(2, ChronoUnit.SECONDS));
         query.setPageable(PageRequest.of(0,10));
-        //this.articleRepository.findAll(article);
         List<ArticleDTO> articles= this.elasticsearchOperations
                 .search(query, Article.class, IndexCoordinates.of("blog"))
                 .stream()
@@ -67,4 +69,20 @@ public class ArticleController {
 
         return ResponseEntity.ok(articles);
     }
+
+    @PostMapping(value = "/query/criteria")
+    public ResponseEntity<List<ArticleDTO>> search(@Valid @RequestBody CriteriaDTO criteriaDTO) {
+        log.info("title {}", criteriaDTO);
+
+        CriteriaQuery query = criteriaService.convert(criteriaDTO);
+        List<ArticleDTO> articles= this.elasticsearchOperations
+                .search(query, Article.class, IndexCoordinates.of("blog"))
+                .stream()
+                .map(SearchHit::getContent)
+                .map(MapperArticle::toArticleDTO)
+                .toList();
+
+        return ResponseEntity.ok(articles);
+    }
+
 }

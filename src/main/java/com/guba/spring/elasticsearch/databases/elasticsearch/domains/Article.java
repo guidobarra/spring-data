@@ -24,5 +24,14 @@ public class Article {
 
     @Field(type = FieldType.Keyword, name = "tags")
     private String[] tags;
+
+    @Field(type = FieldType.Text, name = "type")
+    private String type;
+
+    @Field(type = FieldType.Text, name = "category")
+    private String category;
+
+    @Field(type = FieldType.Double, name = "price")
+    private Double price;
     
 }
